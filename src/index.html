@@ -1,13 +1,38 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="styles.css">
   <title>Vanilla JavaScript App</title>
+  <style>
+    .button {
+      display: inline-block;
+      margin: 10px 0;
+      padding: 10px 20px;
+      background-color: #007bff;
+      color: #fff;
+      text-decoration: none;
+      border-radius: 5px;
+      border: none;
+      cursor: pointer;
+    }
+    .button:hover {
+      background-color: #0056b3;
+    }
+    #loadingIndicator {
+      display: none;
+      margin-top: 10px;
+      color: #666;
+    }
+    .report-section {
+      margin: 30px 0;
+      padding: 20px;
+      background-color: #f8f9fa;
+      border-radius: 5px;
+    }
+  </style>
 </head>
-
 <body>
   <header>
     <nav>
@@ -21,13 +46,70 @@
 
   <main>
     <h1>Vanilla JavaScript App</h1>
-    <p>Welcome to the Vanilla JavaScript App. This is a simple application to demonstrate basic HTML and JavaScript.</p>
-    <a href="generate-report.html" id="generate-report-link">Generate Report</a>
+    <p>This is a static web app with Azure Functions integration.</p>
+    
+    <!-- Add Report Section -->
+    <div class="report-section">
+      <h2>Generate HTML Report</h2>
+      <p>Click the button below to generate and download an HTML report.</p>
+      <button id="generateReportBtn" class="button">Generate Report</button>
+      <div id="loadingIndicator">Generating report, please wait...</div>
+    </div>
   </main>
 
   <footer>
     <p>&copy; 2025 Vanilla JavaScript App</p>
   </footer>
-</body>
 
+  <script>
+    // Report generation functionality
+    document.getElementById('generateReportBtn').addEventListener('click', async function() {
+      const loadingIndicator = document.getElementById('loadingIndicator');
+      const generateBtn = document.getElementById('generateReportBtn');
+      
+      // Show loading state
+      loadingIndicator.style.display = 'block';
+      generateBtn.disabled = true;
+      
+      try {
+        // Call the Azure Function API
+        const response = await fetch('/api/GenerateReport');
+        
+        if (!response.ok) {
+          throw new Error(`Failed to generate report: ${response.statusText}`);
+        }
+        
+        // Get the HTML content
+        const htmlContent = await response.text();
+        
+        // Create a Blob with the HTML content
+        const blob = new Blob([htmlContent], { type: 'text/html' });
+        
+        // Create a download link
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `report-${new Date().toISOString().slice(0, 10)}.html`;
+        
+        // Trigger download
+        document.body.appendChild(a);
+        a.click();
+        
+        // Clean up
+        setTimeout(() => {
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        }, 100);
+        
+      } catch (error) {
+        console.error('Error generating report:', error);
+        alert('Failed to generate report: ' + error.message);
+      } finally {
+        // Reset UI state
+        loadingIndicator.style.display = 'none';
+        generateBtn.disabled = false;
+      }
+    });
+  </script>
+</body>
 </html>
