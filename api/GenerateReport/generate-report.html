@@ -1,0 +1,110 @@
+generate-report.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="styles.css">
+  <title>Generate Report - Vanilla JavaScript App</title>
+  <style>
+    .report-container {
+      margin: 20px 0;
+      padding: 20px;
+      background-color: #fff;
+      border-radius: 5px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .button {
+      display: inline-block;
+      margin: 10px 0;
+      padding: 10px 20px;
+      background-color: #007bff;
+      color: #fff;
+      text-decoration: none;
+      border-radius: 5px;
+      border: none;
+      cursor: pointer;
+    }
+    .button:hover {
+      background-color: #0056b3;
+    }
+    #loadingIndicator {
+      display: none;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <nav>
+      <ul>
+        <li><a href="index.html">Home</a></li>
+        <li><a href="about.html">About</a></li>
+        <li><a href="contact.html">Contact</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main>
+    <h1>Generate Report</h1>
+    <p>Click the button below to generate and download an HTML report.</p>
+    
+    <button id="generateButton" class="button">Generate Report</button>
+    <div id="loadingIndicator">Generating report...</div>
+    
+    <div id="reportContainer" class="report-container" style="display:none;">
+      <h2>Report Preview</h2>
+      <div id="reportPreview"></div>
+      <button id="downloadButton" class="button">Download Report</button>
+    </div>
+  </main>
+
+  <footer>
+    <p>&copy; 2025 Vanilla JavaScript App</p>
+  </footer>
+
+  <script>
+    document.getElementById('generateButton').addEventListener('click', async function() {
+      // Show loading indicator
+      document.getElementById('loadingIndicator').style.display = 'block';
+      
+      try {
+        // Call the API to generate the report
+        const response = await fetch('/api/GenerateReport');
+        if (!response.ok) {
+          throw new Error('Failed to generate report');
+        }
+        
+        const htmlContent = await response.text();
+        
+        // Display the report preview
+        document.getElementById('reportPreview').innerHTML = 
+          '<iframe srcdoc="' + htmlContent.replace(/"/g, '&quot;') + 
+          '" style="width:100%;height:300px;border:1px solid #ddd;"></iframe>';
+        
+        document.getElementById('reportContainer').style.display = 'block';
+        
+        // Set up download button
+        document.getElementById('downloadButton').onclick = function() {
+          // Create blob and download
+          const blob = new Blob([htmlContent], { type: 'text/html' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = 'report-' + new Date().toISOString().split('T')[0] + '.html';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        };
+      } catch (error) {
+        console.error('Error:', error);
+        alert('Failed to generate report: ' + error.message);
+      } finally {
+        // Hide loading indicator
+        document.getElementById('loadingIndicator').style.display = 'none';
+      }
+    });
+  </script>
+</body>
+</html>
